@@ -6,6 +6,9 @@ Vagrant.configure("2") do |config|
     config.vm.box = "ubuntu/focal64"
     config.vm.box_check_update = true
 
+    config.vm.synced_folder "./configs", "/opt/configs"
+    config.vm.synced_folder "./playbooks", "/opt/playbooks"
+
     config.vm.provider "virtualbox" do |vb|
         # Display the VirtualBox GUI when booting the machine
         vb.gui = false

@@ -1,0 +1,58 @@
+---
+- name: Kubernetes Installation Playbook
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    - name: Install packages
+      ansible.builtin.apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+        state: latest
+    
+    - name: Add Docker GPG key
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+    
+    - name: Add Docker Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Install Docker Packages
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        update_cache: yes
+        state: latest
+
+    - name: Start containerd service
+      ansible.builtin.systemd:
+        name: containerd
+        state: started
+
+    - name: Add Google Cloud GPG key
+      ansible.builtin.apt_key:
+        url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+        state: present
+
+    - name: Add Kubernetes Repository
+      ansible.builtin.apt_repository:
+        repo: deb https://apt.kubernetes.io/ kubernetes-xenial main
+        state: present
+
+    - name: Install Kubernetes Packages
+      ansible.builtin.apt:
+        name:
+          - kubelet
+          - kubectl
+          - kubeadm
+        update_cache: yes
+        state: latest

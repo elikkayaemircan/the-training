@@ -1,0 +1,48 @@
+---
+- name: Kubernetes Installation Preperation Playbook
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    - name: Disable the swap temporary
+      command: swapoff -a
+
+    - name: Disable the swap permanently
+      ansible.builtin.replace:
+        path: /etc/fstab
+        regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+        replace: '#\1\2\3swap\4'
+        backup: yes
+    
+    - name: Enable overlay kernel module temporary
+      community.general.modprobe:
+        name: overlay
+        state: present
+    
+    - name: Enable br_netfilter kernel module temporary
+      community.general.modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Enable necessary kernel modules permanently
+      ansible.builtin.copy:
+        src: /opt/configs/modules-load.d_20-kubernetes.conf
+        dest: /etc/modules-load.d/20-kubernetes.conf
+
+    - name: Set kubernetes configs for systemd
+      ansible.builtin.copy:
+        src: /opt/configs/sysctl.d_20-kubernetes.conf
+        dest: /etc/sysctl.d/20-kubernetes.conf
+
+    - name: Load the added systemd configs
+      command: sysctl -p
+
+    - name: Remove packages for clean install if exists
+      ansible.builtin.apt:
+        name:
+          - docker
+          - docker-engine
+          - docker.io
+          - containerd
+          - runc
+        state: absent
