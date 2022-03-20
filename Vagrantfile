@@ -15,11 +15,17 @@ Vagrant.configure("2") do |config|
     end
 
     config.vm.provision "shell", inline: <<-SHELL
-        sudo apt-get update
-        sudo apt-get upgrade -y
+        apt-get update
+        apt-get upgrade -y
         echo "10.0.10.100    master01" >> /etc/hosts
         echo "10.0.10.101    worker01" >> /etc/hosts
         echo "10.0.10.102    worker02" >> /etc/hosts
+        apt-get install -y ansible
+        ansible-galaxy collection install community.general
+        cd /home/vagrant/
+        cp /opt/configs/ansible.cfg /home/vagrant/
+        ansible-playbook -b /opt/playbooks/01-kubernetes_prep.yml
+        ansible-playbook -b /opt/playbooks/02-kubernetes_install.yml
     SHELL
 
     config.vm.define "master01" do |master01|
@@ -29,6 +35,10 @@ Vagrant.configure("2") do |config|
             vb.memory = 4096
             vb.cpus = 4
         end
+        master01.vm.provision "shell", inline: <<-SHELL
+            cd /home/vagrant/
+            ansible-playbook -b /opt/playbooks/03-cluster_master.yml
+        SHELL
     end
 
     (1..2).each do |i|
@@ -39,6 +49,10 @@ Vagrant.configure("2") do |config|
                 vb.memory = 2048
                 vb.cpus = 2
             end
+            node.vm.provision "shell", inline: <<-SHELL
+                cd /home/vagrant
+                ansible-playbook -b /opt/playbooks/04-cluster_worker.yml
+            SHELL
         end
     end
 

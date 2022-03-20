@@ -1,0 +1,8 @@
+---
+- name: Kubernetes Worker Node Playbook
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    - name: Join cluster
+      command: bash -x /opt/configs/join_cluster.sh

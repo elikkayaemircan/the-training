@@ -1,0 +1,37 @@
+---
+- name: Kubernetes Master Node Playbook
+  hosts: localhost
+  gather_facts: False
+
+  tasks:
+    #- name: Pull images
+    #  command: kubeadm config images pull
+
+    - name: Init cluster
+      command: kubeadm init --pod-network-cidr "10.0.10.0/24" --apiserver-advertise-address "10.0.10.100"
+
+    - name: Create vagrant cluster admin folder
+      ansible.builtin.file:
+        path: /home/vagrant/.kube/
+        state: directory
+
+    - name: Make vagrant cluster admin
+      ansible.builtin.copy:
+          src: /etc/kubernetes/admin.conf
+          dest: /home/vagrant/.kube/config
+          owner: vagrant
+          group: vagrant
+
+    - name: Create join command for cluster
+      shell: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: Write the command into file
+      ansible.builtin.copy:
+        content: "{{ join_command.stdout }}"
+        dest: /opt/configs/join_cluster.sh
+
+    - name: Configure kubelet networking
+      command: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+      environment:
+        KUBECONFIG: /etc/kubernetes/admin.conf

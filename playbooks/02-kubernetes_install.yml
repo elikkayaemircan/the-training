@@ -33,6 +33,17 @@
         update_cache: yes
         state: latest
 
+    - name: Configure Docker to use systemd
+      ansible.builtin.copy:
+        src: /opt/configs/daemon.json
+        dest: /etc/docker/daemon.json
+
+    - name: Restart docker service
+      ansible.builtin.systemd:
+        name: docker
+        daemon_reload: yes
+        state: restarted
+
     - name: Start containerd service
       ansible.builtin.systemd:
         name: containerd
